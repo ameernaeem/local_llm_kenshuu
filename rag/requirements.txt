@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+numpy
+faiss-cpu
+sentence-transformers
+langchain-community
+torch
+langchain
+

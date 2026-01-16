@@ -1,0 +1,78 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama:/root/.ollama
+      - ./models:/models:ro
+    restart: unless-stopped
+    command: ["serve"]
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  loader:
+    image: ollama/ollama:latest
+    container_name: ollama_loader
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - ./models:/models:ro
+      - ./config:/config:ro
+      - ./logs/ollama:/logs
+      - ./docker/loader/import_models.sh:/import_models.sh:ro
+      - ./ollama:/root/.ollama
+    restart: "no"
+    entrypoint: ["/bin/sh", "/import_models.sh"]
+
+  rag:
+    build: ./rag
+    container_name: rag
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./vectordb:/vectordb:ro
+      - ./logs/rag:/logs
+    restart: unless-stopped
+
+  ollama-proxy:
+    image: python:3.11-slim
+    container_name: ollama-proxy
+    depends_on:
+      - ollama
+      - rag
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - RAG_URL=http://rag:8000
+        #- RAG_TOP_K=5
+    volumes:
+      - ./ollama/infer_ollama.py:/app/app.py:ro
+    working_dir: /app
+    command: >
+      sh -lc "pip install --no-cache-dir fastapi uvicorn httpx &&
+              uvicorn app:app --host 0.0.0.0 --port 11434"
+    restart: unless-stopped
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    depends_on:
+      - ollama-proxy
+    ports:
+      - "7002:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama-proxy:11434
+      - WEBUI_AUTH=False
+      - ENABLE_SIGNUP=False
+      - WEBUI_SECRET_KEY=training_secret
+    volumes:
+      - ./open-webui-data:/app/backend/data
+    restart: unless-stopped
+

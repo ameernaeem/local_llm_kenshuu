@@ -1,0 +1,11 @@
+# big / generated / runtime
+models/*.gguf
+open-webui-data/**
+ollama/**
+logs/**
+vectordb/**/*.faiss
+vectordb/**/*.pkl
+
+# safety
+**/.gitattributes
+
