@@ -1,4 +1,4 @@
-# llm_basic_kenshuu (Local LLM Training)
+# llm_basic_kenshuu (ロカールLLM研修)
 
 ## What this provides
 - Ollama (local inference)
