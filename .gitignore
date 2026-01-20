@@ -1,7 +1,11 @@
 # big / generated / runtime
 models/*.gguf
 open-webui-data/**
-ollama/**
+ollama/*
+!ollama/infer_ollamma.py
+!ollama/models/
+ollama/models/*
+!ollama/models/.keep
 logs/**
 vectordb/**/*.faiss
 vectordb/**/*.pkl
